@@ -1,0 +1,9 @@
+{
+    "apps": [
+        {
+            "name": "social-backendpanel",
+            "script": "npm",
+            "args" : "start"
+        }
+    ] 
+}
