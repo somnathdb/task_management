@@ -31,4 +31,5 @@ router.get("/myinprogress", taskController.getMyInProgressTasks);
 router.get("/mygetUpcomingTasks", taskController.getMyUpcomingTasks);
 router.get("/getMyTasks", taskController.getMyTasks);
 router.get('/deleteTaskById', taskController.deleteTaskById)
+router.get("/getShortageTasks", taskController.getShortageTasks);
 module.exports = router;

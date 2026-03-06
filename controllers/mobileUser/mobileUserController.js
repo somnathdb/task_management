@@ -116,7 +116,7 @@ exports.addMobileUser = async (req, res) => {
 exports.mobileUserLogin = async (req, res) => {
   try {
     let { number, password, fcmToken } = req.body;
-
+    console.log("119",req.body)
     if (!number || !password) {
       return res.status(400).json({
         status: false,
@@ -131,8 +131,9 @@ exports.mobileUserLogin = async (req, res) => {
     const query = isEmail
       ? { email: number }
       : { number };
-
+console.log("134",query)
     const user = await mobileUserModel.findOne(query);
+    console.log("136",user)
     if (!user || !user.password) {
       return res.status(401).json({
         status: false,

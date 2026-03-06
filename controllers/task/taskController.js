@@ -287,102 +287,102 @@ exports.getAllTasks = async (req, res) => {
   }
 };
 
-exports.updateTaskStatus = async (req, res) => {
-  try {
-    const { taskId, userId, subTasks, comment, subTaskId } = req.body;
+// exports.updateTaskStatus = async (req, res) => {
+//   try {
+//     const { taskId, userId, subTasks, comment, subTaskId } = req.body;
 
-    if (!taskId || !Array.isArray(subTasks)) {
-      return res.status(400).json({ message: "Invalid payload" });
-    }
+//     if (!taskId || !Array.isArray(subTasks)) {
+//       return res.status(400).json({ message: "Invalid payload" });
+//     }
 
-    /* ---------------- Decide Task Status ---------------- */
+//     /* ---------------- Decide Task Status ---------------- */
 
-    const allSubTasksCompleted =
-      subTasks.length > 0 &&
-      subTasks.every(st => st.completed === true);
+//     const allSubTasksCompleted =
+//       subTasks.length > 0 &&
+//       subTasks.every(st => st.completed === true);
 
-    const taskStatus = allSubTasksCompleted
-      ? "completed"
-      : "in-progress";
+//     const taskStatus = allSubTasksCompleted
+//       ? "completed"
+//       : "in-progress";
 
-    /* ---------------- Update Data ---------------- */
+//     /* ---------------- Update Data ---------------- */
 
-    const updateData = {
-      subTasks,
-      status: taskStatus,
-    };
+//     const updateData = {
+//       subTasks,
+//       status: taskStatus,
+//     };
 
-    if (comment && comment.trim() !== "") {
-      updateData.$push = {
-        comments: {
-          subTaskId,
-          comment,
-          commentedBy: userId,
-        },
-      };
-    }
+//     if (comment && comment.trim() !== "") {
+//       updateData.$push = {
+//         comments: {
+//           subTaskId,
+//           comment,
+//           commentedBy: userId,
+//         },
+//       };
+//     }
 
-    /* ---------------- Update Task ---------------- */
+//     /* ---------------- Update Task ---------------- */
 
-    const task = await Task.findByIdAndUpdate(
-      taskId,
-      updateData,
-      { new: true }
-    );
+//     const task = await Task.findByIdAndUpdate(
+//       taskId,
+//       updateData,
+//       { new: true }
+//     );
 
-    if (!task) {
-      return res.status(404).json({ message: "Task not found" });
-    }
+//     if (!task) {
+//       return res.status(404).json({ message: "Task not found" });
+//     }
 
-    /* ---------------- Fetch Admin Tokens ---------------- */
+//     /* ---------------- Fetch Admin Tokens ---------------- */
 
-    const admins = await mobileUserModel.find({
-      role: "admin",
-      fcmToken: { $exists: true, $ne: null },
-    }).select("fcmToken");
+//     const admins = await mobileUserModel.find({
+//       role: "admin",
+//       fcmToken: { $exists: true, $ne: null },
+//     }).select("fcmToken");
 
-    const adminTokens = admins.map(a => a.fcmToken);
+//     const adminTokens = admins.map(a => a.fcmToken);
 
-    /* ---------------- Assigned Users Tokens ---------------- */
+//     /* ---------------- Assigned Users Tokens ---------------- */
 
-    const assignedTokens = task.assignTo
-      .map(u => u.fcmToken)
-      .filter(Boolean);
+//     const assignedTokens = task.assignTo
+//       .map(u => u.fcmToken)
+//       .filter(Boolean);
 
-    /* ---------------- Merge & Deduplicate ---------------- */
+//     /* ---------------- Merge & Deduplicate ---------------- */
 
-    const finalTokens = [
-      ...new Set([...adminTokens, ...assignedTokens].flat().filter(Boolean))
-    ];
+//     const finalTokens = [
+//       ...new Set([...adminTokens, ...assignedTokens].flat().filter(Boolean))
+//     ];
 
-    /* ---------------- Send Notification ---------------- */
+//     /* ---------------- Send Notification ---------------- */
 
-    await sendPushNotifications(
-      finalTokens,
-      "Task Updated",
-      `Task "${task.title}" marked as ${taskStatus}`,
-      {
-        taskId: task._id.toString(),
-        taskName: task.title,
-        status: taskStatus,
-      }
-    );
+//     await sendPushNotifications(
+//       finalTokens,
+//       "Task Updated",
+//       `Task "${task.title}" marked as ${taskStatus}`,
+//       {
+//         taskId: task._id.toString(),
+//         taskName: task.title,
+//         status: taskStatus,
+//       }
+//     );
 
-    /* ---------------- Response ---------------- */
+//     /* ---------------- Response ---------------- */
 
-    res.status(200).json({
-      message: "Task status updated successfully",
-      data: task,
-    });
+//     res.status(200).json({
+//       message: "Task status updated successfully",
+//       data: task,
+//     });
 
-  } catch (err) {
-    console.error("❌ updateTaskStatus error:", err);
-    res.status(500).json({
-      message: "Internal Server Error",
-      error: err.message,
-    });
-  }
-};
+//   } catch (err) {
+//     console.error("❌ updateTaskStatus error:", err);
+//     res.status(500).json({
+//       message: "Internal Server Error",
+//       error: err.message,
+//     });
+//   }
+// };
 
 
 // exports.updateTaskStatus = async (req, res) => {
@@ -467,6 +467,105 @@ exports.updateTaskStatus = async (req, res) => {
 //     });
 //   }
 // };
+
+
+exports.updateTaskStatus = async (req, res) => {
+  try {
+    const { taskId, userId, subTasks, comment, subTaskId,isShortage } = req.body;
+    console.log("515",req.body)
+    if (!taskId || !Array.isArray(subTasks)) {
+      return res.status(400).json({ message: "Invalid payload" });
+    }
+
+    /* ---------------- Decide Task Status ---------------- */
+
+    const allSubTasksCompleted =
+      subTasks.length > 0 &&
+      subTasks.every(st => st.completed === true);
+
+    const taskStatus = allSubTasksCompleted
+      ? "completed"
+      : "in-progress";
+
+    /* ---------------- Update Data ---------------- */
+
+    const updateData = {
+      subTasks,
+      status: taskStatus,
+      isShortage: isShortage ?? false,
+    };
+
+    if (comment && comment.trim() !== "") {
+      updateData.$push = {
+        comments: {
+          subTaskId,
+          comment,
+          commentedBy: userId,
+        },
+      };
+    }
+
+    /* ---------------- Update Task ---------------- */
+
+    const task = await Task.findByIdAndUpdate(
+      taskId,
+      updateData,
+      { new: true }
+    );
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    /* ---------------- Fetch Admin Tokens ---------------- */
+
+    const admins = await mobileUserModel.find({
+      role: "admin",
+      fcmToken: { $exists: true, $ne: null },
+    }).select("fcmToken");
+
+    const adminTokens = admins.map(a => a.fcmToken);
+
+    /* ---------------- Assigned Users Tokens ---------------- */
+
+    const assignedTokens = task.assignTo
+      .map(u => u.fcmToken)
+      .filter(Boolean);
+
+    /* ---------------- Merge & Deduplicate ---------------- */
+
+    const finalTokens = [
+      ...new Set([...adminTokens, ...assignedTokens].flat().filter(Boolean))
+    ];
+
+    /* ---------------- Send Notification ---------------- */
+
+    await sendPushNotifications(
+      finalTokens,
+      "Task Updated",
+      `Task "${task.title}" marked as ${taskStatus}`,
+      {
+        taskId: task._id.toString(),
+        taskName: task.title,
+        status: taskStatus,
+      }
+    );
+
+    /* ---------------- Response ---------------- */
+
+    res.status(200).json({
+      message: "Task status updated successfully",
+      data: task,
+    });
+
+  } catch (err) {
+    console.error("❌ updateTaskStatus error:", err);
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
+  }
+};
 
 exports.getPendingTasks = async (req, res) => {
   try {
@@ -754,6 +853,30 @@ exports.getMyInProgressTasks = async (req, res) => {
 
   } catch (err) {
     console.log("468",err)
+    res.status(500).json({
+      status: false,
+      error: err.message
+    });
+  }
+};
+
+exports.getShortageTasks = async (req, res) => {
+  try {
+    const pageNo = parseInt(req.query.pageNo) || 1;
+    const limit = 10;
+
+    const tasks = await Task.find({ isShortage:true })
+      .populate("userId", "name email")
+      .populate("assignTo", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      status: true,
+      count: tasks.length,
+      data: tasks
+    });
+
+  } catch (err) {
     res.status(500).json({
       status: false,
       error: err.message
